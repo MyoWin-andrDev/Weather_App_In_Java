@@ -1,4 +1,6 @@
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.beans.Expression;
 import java.io.IOException;
@@ -54,23 +56,30 @@ public static JSONObject getLocationData(String city){
         String jsonResponse = readApiResponse(apiConnection);
 
         //3.Parse the string into a JSON Object
+        JSONParser parser = new JSONParser();
+        JSONObject resultJsonObj = (JSONObject) parser.parse(jsonResponse);
+
+        //4. Retrieve Location Data
+        JSONArray locationData = (JSONArray) resultJsonObj.get("results");
+        return (JSONObject) locationData.get(0);
     }catch (Exception e ){
         e.printStackTrace();
     }
+    //return null;
 }
 
 public static HttpURLConnection fetchApiResponse(String urlString){
-    try{
+    try {
         //attempt to create connection
-        URL url = null;
-        try {
+
+            URL url = null;
             url = new URL(urlString);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
         try {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        //set request method to get
+            //set request method to get
             conn.setRequestMethod("GET");
 
             return conn;
@@ -80,4 +89,27 @@ public static HttpURLConnection fetchApiResponse(String urlString){
         }
         //could not make connection
         return null;
+
+}
+
+public static String readApiResponse(HttpURLConnection apiConnection) {
+    try {
+        //Create a StringBuilder to store the resulting JSON data
+        StringBuilder resultJson = new StringBuilder();
+
+        //Create a Scanner to read from the InputStream of the HttpURLConnection
+        Scanner scanner = new Scanner(apiConnection.getInputStream());
+
+        //Loop through each line in the response and append it to the StringBuilder
+        while (scanner.hasNext()) {
+            //Read and append the current line to the StringBulder
+            resultJson.append(scanner.nextLine());
+        }
+        //Close the Scanner to release resources associated with it
+        scanner.close();
+        //Return the JSON data as a String
+        return resultJson.toString();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
 }
